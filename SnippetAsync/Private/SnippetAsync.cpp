@@ -14,6 +14,8 @@
 #include "SimpleThread.h"
 #include "SimpleQueuedWorker.h"
 #include "SimpleAsyncTask.h"
+#include "SimpleGraphTask.h"
+#include "SimpleAsync.h"
 
 #include "RNGThread.h"
 #include "PrimeNumberThread.h"
@@ -112,10 +114,23 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 	// Test_SimpleTask_2(true);
 	// Test_SimpleTask_2(false);
 	// Test_SimpleTask_3();
+	
+	// Test_GraphTask_Simple();
+	// Test_GraphTask_Simple2();
+	// Test_GraphTask_Simple3();
+	// Test_GraphTask_NullTask();
+	// Test_GraphTask_ReturnTask();
+	// Test_GraphTask_Delegate();
+	// Test_GraphTask_Function();
 
+	// Test_FuturePromise();
+	// Test_FuturePromise2();
+	Test_Async();
+	
+	
 	// TestRNGThread();
 	// TestPrimeNumberThreads();
-	Test_FindPrimeNumbers();
+	// Test_FindPrimeNumbers();
 
 	// FPlatformProcess::Sleep(60);
 	std::cin.get();

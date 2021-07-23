@@ -7,9 +7,7 @@ FPrimeNumberThread* FPrimeNumberThread::Runnable = NULL;
 //***********************************************************
 
 FPrimeNumberThread::FPrimeNumberThread(TArray<int>& TheArray, const int32 IN_TotalPrimesToFind)
-	: TotalPrimesToFind(IN_TotalPrimesToFind)
-	  , StopTaskCounter(0)
-	  , PrimesFoundCount(0)
+	: StopTaskCounter(0), PrimesFoundCount(0), TotalPrimesToFind(IN_TotalPrimesToFind)
 {
 	//Link to where data should be stored
 	PrimeNumbers = &TheArray;
