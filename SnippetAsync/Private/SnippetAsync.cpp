@@ -102,13 +102,8 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 	GEngineLoop.PreInit(ArgC, ArgV);
 	UE_LOG(LogSnippetAsync, Display, TEXT("Hello World! by David !!"));
 
-	FThreadManager::Get().ForEachThread([](uint32 ThreadID, FRunnableThread* Thread)
-	{
-		UE_LOG(LogSnippetAsync, Display, TEXT("thread-before:%s,%u"), *Thread->GetThreadName(), ThreadID);
-	});
-
-
 	// Test_SimpleThread();
+	Test_Event();
 	// Test_SimpleQueuedWorker();
 	// Test_SimpleTask_1();
 	// Test_SimpleTask_2(true);
@@ -125,7 +120,7 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	// Test_FuturePromise();
 	// Test_FuturePromise2();
-	Test_Async();
+	// Test_Async();
 	
 	
 	// TestRNGThread();

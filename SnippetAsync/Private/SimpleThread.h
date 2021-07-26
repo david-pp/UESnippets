@@ -48,6 +48,8 @@ public:
 	virtual void Stop() override
 	{
 		bStop = true;
+		if (RunnableThread)
+			RunnableThread->WaitForCompletion();
 	}
 
 	void Log(const char* Action)
@@ -123,11 +125,22 @@ private:
 
 #define SAFE_DELETE(Ptr)  if (Ptr) { delete Ptr; Ptr = nullptr; }
 
+inline void DumpAllThreads(const char* Log)
+{
+	FThreadManager::Get().ForEachThread(
+		[=](uint32 ThreadID, FRunnableThread* Thread)
+		{
+			UE_LOG(LogTemp, Display, TEXT("%s: %s,%u"), ANSI_TO_TCHAR(Log), *Thread->GetThreadName(), ThreadID);
+		});
+}
+
 inline void Test_SimpleThread()
 {
 	// Create Threads
 	FSimpleThread* SimpleThread1 = new FSimpleThread(TEXT("SimpleThread1"));
 	FSimpleThread* SimpleThread2 = new FSimpleThread(TEXT("SimpleThread2"));
+
+	DumpAllThreads(__FUNCTION__);
 
 	// Ticks
 	int TickCount = 100;
@@ -145,4 +158,75 @@ inline void Test_SimpleThread()
 	// Destroy Threads
 	SAFE_DELETE(SimpleThread1);
 	SAFE_DELETE(SimpleThread2);
+}
+
+inline void Test_Atomic()
+{
+	TAtomic<int> Counter;
+	Counter ++; // Atomic increment -> FPlatformAtomics::InterlockedIncrement
+	if (Counter.Load()) // Atomic read -> FPlatformAtomics::AtomicRead
+	{
+	}
+
+	FThreadSafeCounter Counter2;
+	Counter2.Increment(); // FPlatformAtomics::InterlockedIncrement
+	Counter2.Decrement(); // FPlatformAtomics::InterlockedDecrement
+	if (Counter2.GetValue() == 0) // FPlatformAtomics::AtomicRead
+	{
+	}
+}
+
+
+inline void Test_Event1()
+{
+	FEvent* SyncEvent = nullptr;
+
+	Async(EAsyncExecution::Thread, [&SyncEvent]()
+	{
+		FPlatformProcess::Sleep(3);
+		if (SyncEvent)
+		{
+			SyncEvent->Trigger();
+			UE_LOG(LogTemp, Display, TEXT("Trigger ....."));
+		}
+	});
+
+	SyncEvent = FPlatformProcess::GetSynchEventFromPool(true);
+	SyncEvent->Wait((uint32)-1);
+	FPlatformProcess::ReturnSynchEventToPool(SyncEvent);
+
+	UE_LOG(LogTemp, Display, TEXT("Over ....."));
+}
+
+inline void Test_Event2()
+{
+	FEventRef SyncEvent(EEventMode::AutoReset);
+
+	FEvent* Event = SyncEvent.operator->();
+	Async(EAsyncExecution::Thread, [Event]()
+	{
+		FPlatformProcess::Sleep(3);
+		Event->Trigger();
+		UE_LOG(LogTemp, Display, TEXT("Trigger ....."));
+	});
+
+	SyncEvent->Wait((uint32)-1);
+	UE_LOG(LogTemp, Display, TEXT("Over ....."));
+}
+
+inline void Test_Event()
+{
+	// waiting..
+	{
+		FScopedEvent SyncEvent;
+
+		Async(EAsyncExecution::Thread, [&SyncEvent]()
+		{
+			FPlatformProcess::Sleep(3);
+			SyncEvent.Trigger();
+			UE_LOG(LogTemp, Display, TEXT("Trigger ....."));
+		});
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Over ....."));
 }
