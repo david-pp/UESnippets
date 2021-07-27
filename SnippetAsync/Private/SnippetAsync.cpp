@@ -103,7 +103,7 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 	UE_LOG(LogSnippetAsync, Display, TEXT("Hello World! by David !!"));
 
 	// Test_SimpleThread();
-	Test_Event();
+	// Test_Event();
 	// Test_SimpleQueuedWorker();
 	// Test_SimpleTask_1();
 	// Test_SimpleTask_2(true);
@@ -126,6 +126,10 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 	// TestRNGThread();
 	// TestPrimeNumberThreads();
 	// Test_FindPrimeNumbers();
+
+	// Test_OpenMP();
+	// Test_LockFree_LIFO();
+	Test_LockFree_FIFO();
 
 	// FPlatformProcess::Sleep(60);
 	std::cin.get();

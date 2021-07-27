@@ -230,3 +230,143 @@ inline void Test_Event()
 
 	UE_LOG(LogTemp, Display, TEXT("Over ....."));
 }
+
+//////////////////////////////////////////////////
+
+// #include <omp.h>
+
+inline void Test_OpenMP()
+{
+	static long num_rects = 1000000;
+
+	// pi = Int(4/(1+x^2))
+	double mid, height, width, sum = 0;
+	int i = 0;
+	double area = 0;
+	width = 1. / (double)num_rects;
+
+#pragma omp parallel for private(mid, height, width) reduce(+:sum)
+	for (i = 0; i < num_rects; i++)
+	{
+		mid = (i + 0.5) * width;
+		height = 4.0 / (1. + mid * mid);
+		sum += height;
+	}
+
+	area = width * sum;
+	UE_LOG(LogTemp, Display, TEXT("Pi is : %f"), area);
+}
+
+
+//////////////////////////////////////////////////
+
+class FMyData
+{
+public:
+	FMyData(const int& V) : Value(V)
+	{
+	}
+
+	int Value;
+};
+
+
+inline void Test_LockFree_LIFO()
+{
+	TLockFreePointerListLIFO<FMyData> ThreadSafeStack;
+
+	TArray<TFuture<void>> Futures;
+	const int ThreadNum = 10;
+
+	// Create N threads
+	for (int i = 0; i < ThreadNum; ++i)
+	{
+		TFuture<void> Future = Async(EAsyncExecution::Thread, [&ThreadSafeStack, i]()
+		{
+			// Push in a thread
+			ThreadSafeStack.Push(new FMyData(i));
+
+			// FPlatformProcess::Sleep(2);
+			int32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+			FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+			UE_LOG(LogTemp, Display, TEXT("%s[%d], Push, %d"), *ThreadName, ThreadId, i);
+		});
+
+		Futures.Add(MoveTemp(Future));
+	}
+
+	// Waiting for thread done
+	while (true)
+	{
+		bool IsAllThreadDone = true;
+		for (auto& Future : Futures)
+		{
+			if (!Future.IsReady())
+				IsAllThreadDone = false;
+		}
+
+		if (IsAllThreadDone) break;
+	}
+
+
+	// Dump all in main thread
+	while (FMyData* Data = ThreadSafeStack.Pop())
+	{
+		int32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+		FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+		UE_LOG(LogTemp, Display, TEXT("%s[%d], Dump - %d"), *ThreadName, ThreadId, Data->Value);
+		delete Data;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Over ....."));
+}
+
+inline void Test_LockFree_FIFO()
+{
+	TLockFreePointerListFIFO<FMyData, PLATFORM_CACHE_LINE_SIZE> ThreadSafeList;
+
+	TArray<TFuture<void>> Futures;
+	const int ThreadNum = 10;
+
+	// Create N threads
+	for (int i = 0; i < ThreadNum; ++i)
+	{
+		TFuture<void> Future = Async(EAsyncExecution::Thread, [&ThreadSafeList, i]()
+		{
+			// Push in a thread
+			ThreadSafeList.Push(new FMyData(i));
+
+			// FPlatformProcess::Sleep(2);
+			int32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+			FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+			UE_LOG(LogTemp, Display, TEXT("%s[%d], Push, %d"), *ThreadName, ThreadId, i);
+		});
+
+		Futures.Add(MoveTemp(Future));
+	}
+
+	// Waiting for thread done
+	while (true)
+	{
+		bool IsAllThreadDone = true;
+		for (auto& Future : Futures)
+		{
+			if (!Future.IsReady())
+				IsAllThreadDone = false;
+		}
+
+		if (IsAllThreadDone) break;
+	}
+
+
+	// Dump all in main thread
+	while (FMyData* Data = ThreadSafeList.Pop())
+	{
+		int32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+		FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+		UE_LOG(LogTemp, Display, TEXT("%s[%d], Dump - %d"), *ThreadName, ThreadId, Data->Value);
+		delete Data;
+	}
+
+	UE_LOG(LogTemp, Display, TEXT("Over ....."));
+}
