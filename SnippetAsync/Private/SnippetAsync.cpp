@@ -21,6 +21,9 @@
 #include "PrimeNumberThread.h"
 #include "PrimeNumberGraphTask.h"
 
+#include "SimpleLockFree.h"
+#include "SimpleProducerConsumer.h"
+
 
 DEFINE_LOG_CATEGORY_STATIC(LogSnippetAsync, Log, All);
 
@@ -129,7 +132,11 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	// Test_OpenMP();
 	// Test_LockFree_LIFO();
-	Test_LockFree_FIFO();
+	// Test_LockFree_FIFO();
+
+	// Test_Queue();
+	// Test_MPMC();
+	Test_DoubleBuffer();
 
 	// FPlatformProcess::Sleep(60);
 	std::cin.get();
