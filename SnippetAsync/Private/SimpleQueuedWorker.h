@@ -27,6 +27,9 @@ public:
 	virtual void Abandon() override
 	{
 		Log(__FUNCTION__);
+
+		// Abandon the task, delete the worker
+		delete this;
 	}
 
 	void Log(const char* Action)
@@ -58,11 +61,15 @@ inline void Test_SimpleQueuedWorker()
 	}
 
 	// Ticks
-	int TickCount = 100;
+	int TickCount = 20;
 	for (int i = 0; i < TickCount; ++i)
 	{
 		// Consume
 		UE_LOG(LogTemp, Display, TEXT("Tick[%d] ........ "), i);
 		FPlatformProcess::Sleep(0.1);
 	}
+
+	// Destroy, if work is not done, call Abandon
+	Pool->Destroy();
+	delete Pool;
 }
