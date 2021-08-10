@@ -107,14 +107,17 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	// Test_SimpleThread();
 	// Test_Event();
-	Test_SimpleQueuedWorker();
+	// Test_SimpleQueuedWorker();
 	// Test_SimpleTask_1();
 	// Test_SimpleTask_2(true);
 	// Test_SimpleTask_2(false);
 	// Test_SimpleTask_3();
+
 	
 	// Test_GraphTask_Simple();
+	Test_GraphTask_Simple1();
 	// Test_GraphTask_Simple2();
+	// Test_GraphTask_Simple2_Funciton();
 	// Test_GraphTask_Simple3();
 	// Test_GraphTask_NullTask();
 	// Test_GraphTask_ReturnTask();

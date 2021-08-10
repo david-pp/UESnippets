@@ -44,7 +44,6 @@ public:
 	}
 };
 
-
 inline void Test_SimpleTask_1()
 {
 	// start an example job, running in GThreadPool
@@ -128,6 +127,6 @@ inline void Test_SimpleTask_3()
 		Task->EnsureCompletion();
 		delete Task;
 	}
-	
+
 	UE_LOG(LogTemp, Display, TEXT("Over .............."));
 }

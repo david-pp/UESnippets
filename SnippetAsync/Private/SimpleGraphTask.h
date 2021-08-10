@@ -85,13 +85,14 @@ public:
 };
 
 
-// Only One Task
+// Only One Task - Auto delete
 inline void Test_GraphTask_Simple()
 {
 	// construct and dispatch, when the work is done, deleted automatically
-	auto Task1 = TGraphTask<FGraphTaskSimple>::CreateTask().
+	TGraphTask<FGraphTaskSimple>::CreateTask().
 		ConstructAndDispatchWhenReady(TEXT("SimpleTask1"), 10000, 3);
 
+	// hold and unlock to run
 	TGraphTask<FGraphTaskSimple>* Task = TGraphTask<FGraphTaskSimple>::CreateTask().ConstructAndHold(
 		TEXT("SimpleTask2"), 20000);
 	if (Task)
@@ -101,6 +102,33 @@ inline void Test_GraphTask_Simple()
 		Task->Unlock();
 		Task = nullptr;
 	}
+}
+
+// Only One Task - Waiting in gamethread
+inline void Test_GraphTask_Simple1()
+{
+	// task completes after it's waited for
+	FGraphEventRef Event = FFunctionGraphTask::CreateAndDispatchWhenReady([]()
+		{
+			UE_LOG(LogTemp, Display, TEXT("Main task"));
+			FPlatformProcess::Sleep(5.f); // pause for a bit to let waiting start
+		}
+	);
+	check(!Event->IsComplete());
+	Event->Wait(ENamedThreads::GameThread);
+	UE_LOG(LogTemp, Display, TEXT("Over1 ..."));
+
+	// tasks
+	FGraphEventArray Tasks;
+	for (int i = 0; i < 10; ++i)
+	{
+		Tasks.Add(FFunctionGraphTask::CreateAndDispatchWhenReady([i]()
+		{
+			UE_LOG(LogTemp, Display, TEXT("Task %d"), i);
+		}));
+	}
+	FTaskGraphInterface::Get().WaitUntilTasksComplete(MoveTemp(Tasks), ENamedThreads::GameThread);
+	UE_LOG(LogTemp, Display, TEXT("Over2 ..."));
 }
 
 
@@ -126,8 +154,7 @@ inline void Test_GraphTask_Simple2()
 
 	// TaskB -> TaskC
 	{
-		FGraphEventArray Prerequisites;
-		Prerequisites.Add(TaskB);
+		FGraphEventArray Prerequisites{TaskB};
 		TaskC = TGraphTask<FTask>::CreateTask(&Prerequisites).ConstructAndDispatchWhenReady(TEXT("TaksC"), 3, 1);
 	}
 
@@ -142,12 +169,41 @@ inline void Test_GraphTask_Simple2()
 	// Waiting until TaskC is Done
 	// FTaskGraphInterface::Get().WaitUntilTaskCompletes(TaskC);
 	// Or.
-	TaskB->Wait();
+	TaskC->Wait();
 
 	UE_LOG(LogTemp, Display, TEXT("TaskA is Done : %d"), TaskA->IsComplete());
 	UE_LOG(LogTemp, Display, TEXT("TaskB is Done : %d"), TaskA->IsComplete());
 	UE_LOG(LogTemp, Display, TEXT("TaskC is Done : %d"), TaskC->IsComplete());
 
+	UE_LOG(LogTemp, Display, TEXT("Over ......"));
+}
+
+inline void Test_GraphTask_Simple2_Funciton()
+{
+	UE_LOG(LogTemp, Display, TEXT("Start ......"));
+
+	auto TaskA = FFunctionGraphTask::CreateAndDispatchWhenReady(
+		[](ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+		{
+			auto TaskB = FFunctionGraphTask::CreateAndDispatchWhenReady(
+				[](ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+				{
+					auto TaskC = FFunctionGraphTask::CreateAndDispatchWhenReady(
+						[](ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+						{
+							FPlatformProcess::Sleep(1);
+							UE_LOG(LogTemp, Display, TEXT("TaskC is Done"));
+						});
+
+					FPlatformProcess::Sleep(2);
+					UE_LOG(LogTemp, Display, TEXT("TaskB is Done"));
+				});
+
+			FPlatformProcess::Sleep(1);
+			UE_LOG(LogTemp, Display, TEXT("TaskA is Done"));
+		});
+
+	TaskA->Wait(ENamedThreads::GameThread);
 	UE_LOG(LogTemp, Display, TEXT("Over ......"));
 }
 
