@@ -126,8 +126,10 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	// Test_FuturePromise();
 	// Test_FuturePromise2();
-	Test_FuturePromise3();
+	// Test_FuturePromise3();
 	// Test_Async1();
+	// Test_Async2();
+	Test_Parallel();
 	
 	
 	// TestRNGThread();

@@ -154,7 +154,7 @@ int SimpleAsyncFunc()
 	return 123;
 }
 
-void Test_Async1()
+inline void Test_Async1()
 {
 	auto Future = Async(EAsyncExecution::TaskGraph, SimpleAsyncFunc);
 
@@ -167,7 +167,7 @@ void Test_Async1()
 	UE_LOG(LogTemp, Display, TEXT("Value = %d"), Value);
 }
 
-void Test_Async2()
+inline void Test_Async2()
 {
 	// using global function
 	Async(EAsyncExecution::Thread, SimpleAsyncFunc);
@@ -228,4 +228,20 @@ void Test_Async2()
 		FPlatformProcess::Sleep(1);
 		AsyncLog("AsyncTask Function .... Over");
 	});
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+
+inline void Test_Parallel()
+{
+	// parallel
+	ParallelFor(100, [](int32 Index)
+	{
+		int32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+		FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+		UE_LOG(LogTemp, Display, TEXT("%s[%d],Parallel Task, Index:%d"), *ThreadName, ThreadId, Index);	
+	});
+
+	// done
+	UE_LOG(LogTemp, Display, TEXT("Over...."));	
 }
