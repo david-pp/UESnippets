@@ -43,17 +43,37 @@ inline void Test_FuturePromise()
 
 /////////////////////////////////////////////////////////////////////////////////
 
-TFuture<bool> DoSthAsync()
+inline void Test_FuturePromise2()
 {
-	TPromise<bool> Promise;
+	// promise with callback
+	TPromise<bool> Promise([]()
+	{
+		AsyncLog("the promise is set !");
+	});
+
 	TFuture<bool> Future = Promise.GetFuture();
+
+	// running in any threads
+	FFunctionGraphTask::CreateAndDispatchWhenReady([&Promise]()
+	{
+		FPlatformProcess::Sleep(3);
+
+		AsyncLog("do the promise");
+		Promise.SetValue(true);
+	})->Wait(ENamedThreads::GameThread);
+}
+
+TFuture<int> DoSthAsync(int Value)
+{
+	TPromise<int> Promise;
+	TFuture<int> Future = Promise.GetFuture();
 
 	class FGraphTaskSimple
 	{
 	public:
 		// CAUTION!: Must not use references in the constructor args; use pointers instead if you need by reference
-		FGraphTaskSimple(TPromise<bool>&& ThePromise)
-			: Promise(MoveTemp(ThePromise))
+		FGraphTaskSimple(TPromise<int>&& ThePromise, int TheValue)
+			: Promise(MoveTemp(ThePromise)), FutureValue(TheValue)
 		{
 		}
 
@@ -78,49 +98,50 @@ TFuture<bool> DoSthAsync()
 			FPlatformProcess::Sleep(3);
 			AsyncLog("DoSthAsync.... Done");
 
-			Promise.SetValue(true);
+			Promise.SetValue(FutureValue);
 		}
 
 	private:
-		TPromise<bool> Promise;
+		TPromise<int> Promise;
+		int FutureValue;
 	};
 
-	TGraphTask<FGraphTaskSimple>::CreateTask().ConstructAndDispatchWhenReady(MoveTemp(Promise));
+	TGraphTask<FGraphTaskSimple>::CreateTask().ConstructAndDispatchWhenReady(MoveTemp(Promise), MoveTemp(Value));
 
 	return MoveTemp(Future);
 }
 
-inline void Test_FuturePromise2()
+inline void Test_FuturePromise3()
 {
-	// promise with callback
+	// usage1: get
 	{
-		TPromise<bool> Promise([]()
-		{
-			AsyncLog("the promise is set !");
-		});
+		auto Future = DoSthAsync(100);
 
-		TFuture<bool> Future = Promise.GetFuture();
+		// todo other ...
+		FPlatformProcess::Sleep(1);
+		UE_LOG(LogTemp, Display, TEXT("Do something else .."));
 
-		// running in any threads
-		FFunctionGraphTask::CreateAndDispatchWhenReady([&Promise]()
-		{
-			FPlatformProcess::Sleep(3);
-
-			AsyncLog("do the promise");
-			Promise.SetValue(true);
-		})->Wait(ENamedThreads::GameThread);
+		// waiting for the value
+		int Value = Future.Get();
+		UE_LOG(LogTemp, Display, TEXT("Value = %d"), Value);
 	}
 
-	// then
-	{
-		DoSthAsync()
-			.Then([](TFuture<bool>)
+	// usage2 : then
+	DoSthAsync(1)
+			.Then([](TFuture<int> Future) -> int
 			{
-				AsyncLog("then ..");
-			}).Wait();
+				AsyncLog("then1 .. ");
+				UE_LOG(LogTemp, Display, TEXT("Value = %d"), Future.Get());
+				return 2;
+			})
+			.Then([](TFuture<int> Future)
+			{
+				AsyncLog("then2 .. ");
+				UE_LOG(LogTemp, Display, TEXT("Value = %d"), Future.Get());
+			})
+			.Wait();
 
-		AsyncLog("Over....");
-	}
+	AsyncLog("Over....");
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +154,20 @@ int SimpleAsyncFunc()
 	return 123;
 }
 
-void Test_Async()
+void Test_Async1()
+{
+	auto Future = Async(EAsyncExecution::TaskGraph, SimpleAsyncFunc);
+
+	// todo other ...
+	FPlatformProcess::Sleep(1);
+	UE_LOG(LogTemp, Display, TEXT("Do something else .."));
+
+	// waiting for the value
+	int Value = Future.Get();
+	UE_LOG(LogTemp, Display, TEXT("Value = %d"), Value);
+}
+
+void Test_Async2()
 {
 	// using global function
 	Async(EAsyncExecution::Thread, SimpleAsyncFunc);

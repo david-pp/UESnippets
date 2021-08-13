@@ -237,9 +237,7 @@ inline void Test_GraphTask_Simple3()
 	}
 
 	{
-		FGraphEventArray Prerequisites;
-		Prerequisites.Add(TaskC);
-		Prerequisites.Add(TaskD);
+		FGraphEventArray Prerequisites {TaskC, TaskD};
 		TaskE = TGraphTask<FTask>::CreateTask(&Prerequisites).ConstructAndDispatchWhenReady(TEXT("TaksE"), 1, 1);
 	}
 

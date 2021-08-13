@@ -115,7 +115,7 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	
 	// Test_GraphTask_Simple();
-	Test_GraphTask_Simple1();
+	// Test_GraphTask_Simple1();
 	// Test_GraphTask_Simple2();
 	// Test_GraphTask_Simple2_Funciton();
 	// Test_GraphTask_Simple3();
@@ -126,7 +126,8 @@ INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 
 	// Test_FuturePromise();
 	// Test_FuturePromise2();
-	// Test_Async();
+	Test_FuturePromise3();
+	// Test_Async1();
 	
 	
 	// TestRNGThread();
