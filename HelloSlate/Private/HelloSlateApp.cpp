@@ -46,17 +46,18 @@ int RunSimpleGUI(const TCHAR* CommandLine)
 	FCoreDelegates::OnExit.Broadcast();
 	FSlateApplication::Shutdown();
 	FModuleManager::Get().UnloadModulesAtShutdown();
-
+	
 	return 0;
 }
 
 int RunHelloSlate(const TCHAR* CommandLine)
 {
 	// Set your engine dir
-	GForeignEngineDir = TEXT("/Users/david/UnrealEngine4.26/Engine/");
+	GForeignEngineDir = TEXT("/Users/david/UnrealEngine/Engine/");
 	printf("Engine: > %s : %s : %s\n", UE_ENGINE_DIRECTORY, TCHAR_TO_ANSI(GForeignEngineDir),
 	       TCHAR_TO_ANSI(*FPaths::EngineDir()));
 
+	
 	return RunSimpleGUI(CommandLine);
 
 	// start up the main loop

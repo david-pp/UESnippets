@@ -12,6 +12,6 @@ IMPLEMENT_APPLICATION(MyBlankProgram, "MyBlankProgram");
 INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 {
 	GEngineLoop.PreInit(ArgC, ArgV);
-	UE_LOG(LogMyBlankProgram, Display, TEXT("Hello World! by David !!"));
+	UE_LOG(LogMyBlankProgram, Display, TEXT("Hello World! by David !!!"));
 	return 0;
 }
