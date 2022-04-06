@@ -6,6 +6,14 @@
 
 IMPLEMENT_APPLICATION(HelloUECpp, "HelloUECpp");
 
+
+
+void Example_Logging()
+{
+	UE_LOG(LogTemp, Display, TEXT("日志..."));
+	UE_LOG(LogTemp, Warning, TEXT("日志..."));
+}
+
 int main(int argc, const char* argv[])
 {
 	FVector V1(1, 0, 0);
@@ -15,4 +23,6 @@ int main(int argc, const char* argv[])
 	Value += 1;
 
 	std::cout << "Hello UE C++! V1 * V2 = " << Value << std::endl;
+	
+	Example_Logging();
 }
