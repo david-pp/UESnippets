@@ -11,6 +11,7 @@ public class MyBlankProgram : ModuleRules
 		PrivateIncludePaths.Add(System.IO.Path.Combine(EngineDirectory, "Source/Runtime/Launch/Private"));		// For LaunchEngineLoop.cpp include
 
 		PrivateDependencyModuleNames.Add("Core");
+		PrivateDependencyModuleNames.Add("CoreUObject");
 		PrivateDependencyModuleNames.Add("Projects");
 	}
 }
