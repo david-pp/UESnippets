@@ -2,6 +2,7 @@
 
 
 #include "MyBlankProgram.h"
+#include "MyBlankObject.h"
 #include "MyLog.h"
 #include "RequiredProgramMainCPPInclude.h"
 #include "TextFilterUtils.h"
@@ -102,6 +103,8 @@ void MainBody()
 	ExampleString();
 
 	ExampleRegex();
+
+	UMyBlankObject::ExampleUObject();
 }
 
 INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
