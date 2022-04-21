@@ -7,6 +7,7 @@
 #include "MyInterface.h"
 #include "MyStruct.h"
 #include "MyEnum.h"
+#include "CoreUObject/Public/UObject/UnrealType.h"
 #include "MyBlankObject.generated.h"
 
 
@@ -23,6 +24,8 @@ public:
 	static void ExampleReflection();
 
 	// friend FArchive& operator <<(FArchive& Ar, UMyBlankObject& MyObj);
+
+	float MemVarCPP;
 
 public:
 	bool SaveData();
@@ -41,6 +44,9 @@ public:
 	UPROPERTY()
 	FVector Location;
 
+	UFUNCTION(BlueprintCallable, Category=MyBlank)
+	void Hello(FString Value);
+
 	/** C++实现、蓝图调用 */
 	UFUNCTION(BlueprintCallable, Category=MyBlank)
 	void Hello_Callable();
@@ -53,3 +59,71 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category=MyBlank)
 	void Hello_BPImplement();
 };
+
+// Invoke Function Template
+template <typename ... TReturns, typename ... TArgs>
+inline void InvokeFunction(UClass* objClass, UObject* obj, UFunction* func, TTuple<TReturns...>& outParams,
+                           TArgs&&... args)
+{
+	objClass = obj != nullptr ? obj->GetClass() : objClass;
+	UObject* context = obj != nullptr ? obj : objClass;
+	uint8* outPramsBuffer = (uint8*)&outParams;
+
+	if (func->HasAnyFunctionFlags(FUNC_Native)) //quick path for c++ functions
+	{
+		TTuple<TArgs..., TReturns...> params(Forward<TArgs>(args)..., TReturns()...);
+		context->ProcessEvent(func, &params);
+		//copy back out params
+		for (TFieldIterator<FProperty> i(func); i; ++i)
+		{
+			FProperty* prop = *i;
+			if (prop->PropertyFlags & CPF_OutParm)
+			{
+				void* propBuffer = prop->ContainerPtrToValuePtr<void*>(&params);
+				prop->CopyCompleteValue(outPramsBuffer, propBuffer);
+				outPramsBuffer += prop->GetSize();
+			}
+		}
+		return;
+	}
+
+	TTuple<TArgs...> inParams(Forward<TArgs>(args)...);
+	void* funcPramsBuffer = (uint8*)FMemory_Alloca(func->ParmsSize);
+	uint8* inPramsBuffer = (uint8*)&inParams;
+
+	for (TFieldIterator<FProperty> i(func); i; ++i)
+	{
+		FProperty* prop = *i;
+		if (prop->GetFName().ToString().StartsWith("__"))
+		{
+			//ignore private param like __WolrdContext of function in blueprint funcion library
+			continue;
+		}
+		void* propBuffer = prop->ContainerPtrToValuePtr<void*>(funcPramsBuffer);
+		if (prop->PropertyFlags & CPF_OutParm)
+		{
+			prop->CopyCompleteValue(propBuffer, outPramsBuffer);
+			outPramsBuffer += prop->GetSize();
+		}
+		else if (prop->PropertyFlags & CPF_Parm)
+		{
+			prop->CopyCompleteValue(propBuffer, inPramsBuffer);
+			inPramsBuffer += prop->GetSize();
+		}
+	}
+
+	context->ProcessEvent(func, funcPramsBuffer); //call function
+	outPramsBuffer = (uint8*)&outParams; //reset to begin
+
+	//copy back out params
+	for (TFieldIterator<FProperty> i(func); i; ++i)
+	{
+		FProperty* prop = *i;
+		if (prop->PropertyFlags & CPF_OutParm)
+		{
+			void* propBuffer = prop->ContainerPtrToValuePtr<void*>(funcPramsBuffer);
+			prop->CopyCompleteValue(outPramsBuffer, propBuffer);
+			outPramsBuffer += prop->GetSize();
+		}
+	}
+}

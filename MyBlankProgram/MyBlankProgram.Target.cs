@@ -23,7 +23,7 @@ public class MyBlankProgramTarget : TargetRules
 
 		// Editor-only data, however, is needed
 		bBuildWithEditorOnlyData = true;
-
+		
 		// Currently this app is not linking against the engine, so we'll compile out references from Core to the rest of the engine
 		bCompileAgainstEngine = false;
 		bCompileAgainstCoreUObject = true;
@@ -31,5 +31,6 @@ public class MyBlankProgramTarget : TargetRules
 
 		// UnrealHeaderTool is a console application, not a Windows app (sets entry point to main(), instead of WinMain())
 		bIsBuildingConsoleApplication = true;
+		
 	}
 }

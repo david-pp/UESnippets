@@ -2,6 +2,7 @@
 
 
 #include "MyBlankObject.h"
+#include "MyBlankDerivedObject.h"
 
 #include "BufferArchive.h"
 #include "FileHelper.h"
@@ -9,6 +10,7 @@
 #include "MyLog.h"
 #include "Paths.h"
 #include "CoreUObject/Public/CoreUObject.h"
+#include "CoreUObject/Public/UObject/Object.h"
 
 
 FArchive& operator <<(FArchive& Ar, UMyBlankObject& MyObj)
@@ -62,6 +64,7 @@ void UMyBlankObject::ExampleUObject()
 	}
 }
 
+// <https://zhuanlan.zhihu.com/p/61042237>
 void UMyBlankObject::ExampleReflection()
 {
 	// 获取UMyBlankObject的类型信息
@@ -71,10 +74,213 @@ void UMyBlankObject::ExampleReflection()
 	// 获取UMyEnum的类型信息
 	UEnum* MyEnum = ::StaticEnum<EMyEnum>();
 	UEnum* MyEnumOld = ::StaticEnum<EMyEnumOld::Type>();
-	
+
 	// 获取UMyStruct的类型信息
 	UScriptStruct* MyStruct = ::StaticStruct<FMyStruct>();
 	UScriptStruct* MyStruct2 = FMyStruct::StaticStruct();
+
+
+	// 获取当前程序中所有的UClass/UEnum/UStriptStruct信息
+	TArray<UObject*> Results;
+	GetObjectsOfClass(UMyBlankObject::StaticClass(), Results);
+	GetObjectsOfClass(UClass::StaticClass(), Results);
+	GetObjectsOfClass(UEnum::StaticClass(), Results);
+	GetObjectsOfClass(UScriptStruct::StaticClass(), Results);
+	for (auto Obj : Results)
+	{
+		UClass* Class = Cast<UClass>(Obj);
+		if (Class)
+		{
+			UE_LOG(LogMy, Log, TEXT("UClass : %s"), *Class->GetFName().ToString());
+		}
+
+		UEnum* Enum = Cast<UEnum>(Obj);
+		if (Enum)
+		{
+			UE_LOG(LogMy, Log, TEXT("UEnum : %s"), *Enum->GetFName().ToString());
+		}
+
+		UScriptStruct* Struct = Cast<UScriptStruct>(Obj);
+		if (Struct)
+		{
+			UE_LOG(LogMy, Log, TEXT("UScriptStruct : %s"), *Struct->GetFName().ToString());
+		}
+	}
+
+	// 根据类名字获取类定义(名字不带U)
+	UClass* MyClass3 = FindObject<UClass>(ANY_PACKAGE, TEXT("MyBlankObject"));
+	if (MyClass3)
+	{
+		UE_LOG(LogMy, Log, TEXT("UMyBlankObject : %s, %s"),
+		       *MyClass3->GetFName().ToString(),
+		       (MyClass3 == UMyBlankObject::StaticClass() ? TEXT("true") : TEXT("false")));
+	}
+
+	// 遍历字段
+	{
+		// Property
+		for (TFieldIterator<FProperty> It(UMyBlankDerivedObject::StaticClass()); It; ++It)
+		{
+			FProperty* Property = *It;
+			UE_LOG(LogMy, Log, TEXT("UMyBlankObject.%s"), *Property->GetName());
+		}
+
+		// Function (without super class)
+		for (TFieldIterator<UFunction> It(UMyBlankDerivedObject::StaticClass(), EFieldIteratorFlags::ExcludeSuper); It;
+		     ++It)
+		{
+			UFunction* Function = *It;
+			UE_LOG(LogMy, Log, TEXT("UMyBlankObject.%s(), ParasNum=%d"), *Function->GetFName().ToString(),
+			       Function->NumParms);
+		}
+
+		// 实现的接口
+		for (FImplementedInterface& Interface : UMyBlankDerivedObject::StaticClass()->Interfaces)
+		{
+			UE_LOG(LogMy, Log, TEXT("Interface Class :%s"), *Interface.Class->GetFName().ToString());
+		}
+
+		// 遍历枚举
+		// UEnum* MyEnum = StaticEnum<EMyEnum>();
+		if (MyEnum)
+		{
+			for (int I = 0; I < MyEnum->NumEnums(); ++I)
+			{
+				UE_LOG(LogMy, Log, TEXT("EMyEnum.%s = %d"),
+				       *MyEnum->GetNameByIndex(I).ToString(),
+				       MyEnum->GetValueByIndex(I));
+			}
+		}
+
+		// 遍历元数据
+#if WITH_METADATA
+		UE_LOG(LogMy, Log, TEXT("EMyEnum-Meta ...."));
+		UMetaData* MetaData = MyEnum->GetOutermost()->GetMetaData();
+		TMap<FName, FString>* Metas = UMetaData::GetMapForObject(MyEnum);
+		if (Metas)
+		{
+			for (auto & Pair : *Metas)
+			{
+				FName Key = Pair.Key;
+				FString Value = Pair.Value;
+				UE_LOG(LogMy, Log, TEXT("EMyEnum-Meta: %s-%s"), *Key.ToString(), *Value);
+			}
+		}
+#else
+		UE_LOG(LogMy, Log, TEXT("EMyEnum-Meta - without ...."));
+#endif
+	}
+
+	// 查看继承关系
+	{
+		// 遍历继承关系
+		TArray<FString> SuperClassNames;
+		UClass* SuperClass = UMyBlankDerivedObject::StaticClass()->GetSuperClass();
+		while (SuperClass)
+		{
+			SuperClassNames.Add(SuperClass->GetName());
+			SuperClass = SuperClass->GetSuperClass();
+		}
+
+		UE_LOG(LogMy, Log, TEXT("SuperClasss: UMyBlankDerivedObject->%s"), *FString::Join(SuperClassNames, TEXT("->")));
+
+		// 查看所有子类
+		TArray<UClass*> Classes;
+		GetDerivedClasses(UMyBlankObject::StaticClass(), Classes);
+		for (auto Class : Classes)
+		{
+			UE_LOG(LogMy, Log, TEXT("MyBlankObject - Derived: %s"), *Class->GetName());
+		}
+	}
+
+	// 根据名获取Property & Function
+	FProperty* HealthProp = UMyBlankDerivedObject::StaticClass()->FindPropertyByName(FName(TEXT("Health")));
+	if (HealthProp)
+	{
+		UE_LOG(LogMy, Log, TEXT("HealProp = %s"), *HealthProp->GetName());
+	}
+
+	UFunction* HelloBPFunc = UMyBlankDerivedObject::StaticClass()->FindFunctionByName(FName(TEXT("Hello_Callable")));
+	if (HelloBPFunc)
+	{
+		UE_LOG(LogMy, Log, TEXT("HelloFunc = %s"), *HelloBPFunc->GetFName().ToString());
+	}
+
+	UMyBlankDerivedObject* MyBlankDerivedObject = NewObject<UMyBlankDerivedObject>();
+
+	// 获取和设置属性
+	{
+		// Set methods - 1
+		float* HealthPtr = HealthProp->ContainerPtrToValuePtr<float>(MyBlankDerivedObject);
+		*HealthPtr = 1111.0;
+
+
+		// Set methods - 2
+		FFloatProperty* HealthFloatProp = CastField<FFloatProperty>(HealthProp);
+		if (HealthFloatProp)
+		{
+			HealthFloatProp->SetPropertyValue(&MyBlankDerivedObject->Health, 2222.0f);
+		}
+
+		// Get methods - 1
+		float Health1 = 0;
+		Health1 = *HealthPtr;
+
+		// Get methods - 2
+		float Health2 = 0;
+		if (HealthFloatProp)
+		{
+			Health2 = HealthFloatProp->GetPropertyValue(&MyBlankDerivedObject->Health);
+		}
+
+		UE_LOG(LogMy, Log, TEXT("Health = %f,%f,%f, HealthPropertyClass:%s"),
+		       MyBlankDerivedObject->Health, Health1, Health2,
+		       *HealthProp->GetClass()->GetName());
+	}
+
+	// 调用函数
+	{
+		// Hello_Callable() - 无参数
+		MyBlankDerivedObject->ProcessEvent(HelloBPFunc, nullptr);
+
+		// Hello(FString) - 有参数
+		UFunction* HelloFunc = UMyBlankDerivedObject::StaticClass()->FindFunctionByName(TEXT("Hello"));
+		if (HelloFunc)
+		{
+			// Method1 - 直接用
+			struct HelloParams
+			{
+				FString Value;
+			};
+			HelloParams Params;
+			Params.Value = TEXT("Unreal");
+			MyBlankDerivedObject->ProcessEvent(HelloFunc, &Params);
+		}
+
+
+		// Method2 - 封装下
+		auto InvokeHello = [](UMyBlankObject* Object, FString Value)
+		{
+			UFunction* HelloFunc = UMyBlankDerivedObject::StaticClass()->FindFunctionByName(TEXT("Hello"));
+			if (HelloFunc)
+			{
+				struct HelloParams
+				{
+					FString Value;
+				};
+				HelloParams Params;
+				Params.Value = Value;
+				Object->ProcessEvent(HelloFunc, &Params);
+			}
+		};
+
+		InvokeHello(MyBlankDerivedObject, TEXT("Unreal!!"));
+
+		// Method3 - 更加通用的封装(TODO: not work)
+		TTuple<> Returns;
+		FString Param1 = TEXT("Unreal !!!");
+		// InvokeFunction(UMyBlankDerivedObject::StaticClass(), MyBlankDerivedObject, HelloFunc, Returns, Param1);
+	}
 }
 
 bool UMyBlankObject::SaveData()
@@ -162,8 +368,14 @@ void UMyBlankObject::LoadData2()
 	BinAr.Close();
 }
 
+void UMyBlankObject::Hello(FString Value)
+{
+	UE_LOG(LogMy, Log, TEXT("Hello - %s"), *Value);
+}
+
 void UMyBlankObject::Hello_Callable()
 {
+	UE_LOG(LogMy, Log, TEXT("Hello_Callable"));
 }
 
 void UMyBlankObject::Hello_Native_Implementation()

@@ -105,6 +105,7 @@ void MainBody()
 	ExampleRegex();
 
 	UMyBlankObject::ExampleUObject();
+	UMyBlankObject::ExampleReflection();
 }
 
 INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
