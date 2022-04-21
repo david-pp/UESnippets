@@ -10,8 +10,9 @@
 #include "MyLog.h"
 #include "Paths.h"
 #include "CoreUObject/Public/CoreUObject.h"
+#include "CoreUObject/Public/Serialization/Formatters/JsonArchiveInputFormatter.h"
+#include "CoreUObject/Public/Serialization/Formatters/JsonArchiveOutputFormatter.h"
 #include "CoreUObject/Public/UObject/Object.h"
-
 
 FArchive& operator <<(FArchive& Ar, UMyBlankObject& MyObj)
 {
@@ -283,6 +284,82 @@ void UMyBlankObject::ExampleReflection()
 	}
 }
 
+void UMyBlankObject::Serialize2Json(FStructuredArchive& Ar)
+{
+	FStructuredArchive::FRecord RootRecord = Ar.Open().EnterRecord();
+
+	RootRecord << SA_VALUE(TEXT("Health"), Health);
+	RootRecord << SA_VALUE(TEXT("Ammo"), Ammo);
+	FStructuredArchive::FRecord PosRecord = RootRecord.EnterField(SA_FIELD_NAME(TEXT("Position"))).EnterRecord();
+	PosRecord
+		<< SA_VALUE(TEXT("X"), Location.X)
+		<< SA_VALUE(TEXT("Y"), Location.Y)
+		<< SA_VALUE(TEXT("Z"), Location.Z);
+	
+	FStructuredArchive::FRecord StructRecord = RootRecord.EnterField(SA_FIELD_NAME(TEXT("StructVar"))).
+	                                                      EnterRecord();
+	StructRecord << SA_VALUE(TEXT("Value"), StructVar.Value);
+}
+
+void UMyBlankObject::ExampleSerialization2Json()
+{
+	FString SaveFile = FPaths::ProjectSavedDir() / TEXT("MyObject.json");
+	UE_LOG(LogMy, Log, TEXT("Save To: %s"), *SaveFile);
+
+	// Save
+	{
+		TUniquePtr<FArchive> OutputAr(IFileManager::Get().CreateFileWriter(*SaveFile));
+		FJsonArchiveOutputFormatter Formatter(*OutputAr.Get());
+		FStructuredArchive Ar(Formatter);
+
+		UMyBlankObject* Obj = NewObject<UMyBlankObject>();
+		if (Obj)
+		{
+			Obj->Health = 120.0f;
+			Obj->Ammo = 100;
+			Obj->Location = FVector(20, 30, 40);
+			Obj->Serialize2Json(Ar);
+		}
+
+		Ar.Close();
+	}
+
+	// Load
+	{
+		TUniquePtr<FArchive> OutputAr(IFileManager::Get().CreateFileReader(*SaveFile));
+		FJsonArchiveInputFormatter Formatter(*OutputAr.Get());
+		FStructuredArchive Ar(Formatter);
+
+		UMyBlankObject* Obj = NewObject<UMyBlankObject>();
+		if (Obj)
+		{
+			Obj->Serialize2Json(Ar);
+			Obj->Dump();
+		}
+
+		Ar.Close();
+	}
+
+
+	// Engine模块下
+#if 0
+	FMyStruct MyStruct;
+	MyStruct.Value = 100;
+	TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(&MyStruct);
+	if (JsonObject)
+	{
+	}
+
+	FString JsonStr;
+	if (FJsonObjectConverter::UStructToFormattedJsonObjectString<TCHAR, TPrettyJsonPrintPolicy>(
+		FMyStruct::StaticStruct(), &MyStruct, JsonStr))
+	{
+		UE_LOG(LogMy, Log, TEXT("Json:%s"), *JsonStr);
+	}
+
+#endif
+}
+
 bool UMyBlankObject::SaveData()
 {
 	FBufferArchive BinAr;
@@ -325,7 +402,8 @@ void UMyBlankObject::LoadData()
 
 void UMyBlankObject::Dump()
 {
-	UE_LOG(LogMy, Log, TEXT("%f, %d, %s"), Health, Ammo, *Location.ToString());
+	UE_LOG(LogMy, Log, TEXT("Object: %f, %d, %s"), Health, Ammo, *Location.ToString());
+	UE_LOG(LogMy, Log, TEXT("StrutVar.Value = %f"), StructVar.Value);
 }
 
 bool UMyBlankObject::SaveData2()
@@ -367,6 +445,7 @@ void UMyBlankObject::LoadData2()
 	BinArray.Empty();
 	BinAr.Close();
 }
+
 
 void UMyBlankObject::Hello(FString Value)
 {

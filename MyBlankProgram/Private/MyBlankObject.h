@@ -22,6 +22,7 @@ class MYBLANKPROGRAM_API UMyBlankObject : public UObject
 public:
 	static void ExampleUObject();
 	static void ExampleReflection();
+	static void ExampleSerialization2Json();
 
 	// friend FArchive& operator <<(FArchive& Ar, UMyBlankObject& MyObj);
 
@@ -35,6 +36,8 @@ public:
 	bool SaveData2();
 	void LoadData2();
 
+	void Serialize2Json(FStructuredArchive& Ar);
+
 	UPROPERTY()
 	float Health;
 
@@ -43,6 +46,9 @@ public:
 
 	UPROPERTY()
 	FVector Location;
+
+	UPROPERTY()
+	FMyStruct StructVar;
 
 	UFUNCTION(BlueprintCallable, Category=MyBlank)
 	void Hello(FString Value);
