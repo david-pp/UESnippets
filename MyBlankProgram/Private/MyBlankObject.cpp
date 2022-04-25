@@ -295,7 +295,7 @@ void UMyBlankObject::Serialize2Json(FStructuredArchive& Ar)
 		<< SA_VALUE(TEXT("X"), Location.X)
 		<< SA_VALUE(TEXT("Y"), Location.Y)
 		<< SA_VALUE(TEXT("Z"), Location.Z);
-	
+
 	FStructuredArchive::FRecord StructRecord = RootRecord.EnterField(SA_FIELD_NAME(TEXT("StructVar"))).
 	                                                      EnterRecord();
 	StructRecord << SA_VALUE(TEXT("Value"), StructVar.Value);
@@ -358,6 +358,23 @@ void UMyBlankObject::ExampleSerialization2Json()
 	}
 
 #endif
+}
+
+void UMyBlankObject::ExampleStructFieldProperty()
+{
+	for (TFieldIterator<FProperty> It(UMyBlankDerivedObject::StaticClass()); It; ++It)
+	{
+		FProperty* Property = *It;
+		UE_LOG(LogMy, Log, TEXT("UMyBlankObject.%s"), *Property->GetName());
+
+
+		FStructProperty* StructProp = CastField<FStructProperty>(Property);
+		// if (StructProp && StructProp->GetFName() == FMyStruct::StaticStruct()->GetFName())
+		if (StructProp && StructProp->Struct == FMyStruct::StaticStruct())
+		{
+			UE_LOG(LogMy, Log, TEXT("UMyBlankObject.%s is FMyStruct"), *Property->GetName());
+		}
+	}
 }
 
 bool UMyBlankObject::SaveData()

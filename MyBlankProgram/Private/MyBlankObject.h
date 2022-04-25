@@ -23,6 +23,7 @@ public:
 	static void ExampleUObject();
 	static void ExampleReflection();
 	static void ExampleSerialization2Json();
+	static void ExampleStructFieldProperty();
 
 	// friend FArchive& operator <<(FArchive& Ar, UMyBlankObject& MyObj);
 

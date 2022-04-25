@@ -107,6 +107,7 @@ void MainBody()
 	UMyBlankObject::ExampleUObject();
 	UMyBlankObject::ExampleReflection();
 	UMyBlankObject::ExampleSerialization2Json();
+	UMyBlankObject::ExampleStructFieldProperty();
 }
 
 INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
