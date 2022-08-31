@@ -278,7 +278,7 @@ void UMyBlankObject::ExampleReflection()
 		InvokeHello(MyBlankDerivedObject, TEXT("Unreal!!"));
 
 		// Method3 - 更加通用的封装(TODO: not work)
-		TTuple<> Returns;
+		// TTuple<> Returns;
 		FString Param1 = TEXT("Unreal !!!");
 		// InvokeFunction(UMyBlankDerivedObject::StaticClass(), MyBlankDerivedObject, HelloFunc, Returns, Param1);
 	}

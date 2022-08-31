@@ -1,11 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+#pragma warning(disable: 4668) 
+
 #include <iostream>
 #include "HelloUECpp.h"
 #include "RequiredProgramMainCPPInclude.h"
 
-IMPLEMENT_APPLICATION(HelloUECpp, "HelloUECpp");
 
+IMPLEMENT_APPLICATION(HelloUECpp, "HelloUECpp");
 
 
 void Example_Logging()
