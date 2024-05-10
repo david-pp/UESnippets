@@ -98,22 +98,22 @@ void MainBody()
 {
 	UE_LOG(LogMyBlankProgram, Display, TEXT("Hello World! by David !!!"));
 
-	ExampleLogging();
+	// ExampleLogging();
 
-	ExampleString();
+	// ExampleString();
 
-	ExampleRegex();
+	// ExampleRegex();
 
-	UMyBlankObject::ExampleUObject();
-	UMyBlankObject::ExampleReflection();
-	UMyBlankObject::ExampleSerialization2Json();
-	UMyBlankObject::ExampleStructFieldProperty();
+	// UMyBlankObject::ExampleUObject();
+	// UMyBlankObject::ExampleReflection();
+	// UMyBlankObject::ExampleSerialization2Json();
+	// UMyBlankObject::ExampleStructFieldProperty();
 }
 
 INT32_MAIN_INT32_ARGC_TCHAR_ARGV()
 {
 	// Set your engine dir
-	GForeignEngineDir = TEXT("/Users/david/UnrealEngine/Engine/");
+	// GForeignEngineDir = TEXT("/Users/david/UnrealEngine/Engine/");
 	printf("Engine: > %s : %s : %s\n", UE_ENGINE_DIRECTORY, TCHAR_TO_ANSI(GForeignEngineDir),
 	       TCHAR_TO_ANSI(*FPaths::EngineDir()));
 
